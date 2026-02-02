@@ -1,0 +1,139 @@
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: esa-iagen-qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - ./qdrant_storage:/qdrant/storage
+    environment:
+      - QDRANT__SERVICE__GRPC_PORT=6334
+    restart: unless-stopped
+    networks:
+      - esa-iagen-network
+    healthcheck:
+      # Qdrant container doesn't have curl/wget installed
+      # Use a simple TCP connectivity check that works without external tools
+      # This verifies the service is listening on port 6333
+      test: ["CMD-SHELL", "timeout 1 bash -c 'cat < /dev/null > /dev/tcp/localhost/6333' 2>/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  api:
+    # ⚠️ IMPORTANTE: Si cambias el código, ejecuta: docker compose up -d --build api
+    # Docker NO reconstruye automáticamente cuando solo cambias el código fuente
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: esa-iagen-api-v3
+    ports:
+      - "8002:8000"  # Host:Container - API accessible on port 8002
+    env_file:
+      - ../../.env
+    environment:
+      - QDRANT__HOST=qdrant
+      - QDRANT__PORT=6333
+      - UVICORN_WORKERS=1  # Development: 1 worker for faster startup
+      # CORS origins (optional - defaults to settings.yaml)
+      # Uncomment and modify if needed:
+      # - API__CORS_ORIGINS=http://localhost:3000,http://frontend:3000
+    depends_on:
+      qdrant:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - esa-iagen-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: esa-iagen-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'  # Keep 30 days of data
+    restart: unless-stopped
+    networks:
+      - esa-iagen-network
+    depends_on:
+      - api
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: esa-iagen-grafana
+    ports:
+      - "3002:3000"  # Changed from 3001 to 3002 (3001 might be in use by frontend)
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin} # Set GRAFANA_ADMIN_USER env var or use default
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-CHANGE_ME_IN_PRODUCTION} # Set GRAFANA_ADMIN_PASSWORD env var
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://localhost:3002
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    restart: unless-stopped
+    networks:
+      - esa-iagen-network
+    depends_on:
+      - prometheus
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: esa-iagen-frontend
+    ports:
+      - "3000:3000"  # Frontend accessible on port 3000
+    environment:
+      - NODE_ENV=production
+      # API URL from browser perspective (browser makes requests, not container)
+      # In Docker: browser → localhost:8002 → api container
+      # In localhost: browser → localhost:8002 → local API
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8002}
+      # Environment indicator (useful for debugging)
+      - NEXT_PUBLIC_ENV=docker
+    depends_on:
+      - api
+    restart: unless-stopped
+    networks:
+      - esa-iagen-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  esa-iagen-network:
+    driver: bridge
+
+volumes:
+  qdrant_storage:
+  prometheus_data:
+  grafana_data:
+

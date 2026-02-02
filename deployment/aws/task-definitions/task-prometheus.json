@@ -1,0 +1,45 @@
+{
+  "family": "esa-iagen-prometheus",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "taskRoleArn": "arn:aws:iam::YOUR_ACCOUNT_ID:role/ecsTaskExecutionRole",
+  "executionRoleArn": "arn:aws:iam::YOUR_ACCOUNT_ID:role/ecsTaskExecutionRole",
+  "containerDefinitions": [
+    {
+      "name": "prometheus",
+      "image": "prom/prometheus:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 9090,
+          "protocol": "tcp"
+        }
+      ],
+      "entryPoint": ["/bin/sh", "-c"],
+      "command": [
+        "printf '%s\\n' 'global:' '  scrape_interval: 15s' '  evaluation_interval: 15s' '' 'scrape_configs:' '  - job_name: sentiwiki-rag-api' '    static_configs:' '      - targets:' '          - api.esa-iagen.local:8000' '    metrics_path: /metrics' '    scrape_interval: 5s' > /tmp/prometheus.yml && cat /tmp/prometheus.yml && /bin/prometheus --config.file=/tmp/prometheus.yml --storage.tsdb.path=/prometheus --storage.tsdb.retention.time=30d"
+      ],
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "wget --quiet --tries=1 --spider http://localhost:9090/-/healthy || exit 1"
+        ],
+        "interval": 30,
+        "timeout": 10,
+        "retries": 3,
+        "startPeriod": 40
+      },
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/esa-iagen",
+          "awslogs-region": "YOUR_REGION",
+          "awslogs-stream-prefix": "prometheus"
+        }
+      }
+    }
+  ]
+}
+

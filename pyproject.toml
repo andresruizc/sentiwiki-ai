@@ -1,0 +1,177 @@
+[build-system]
+requires = ["setuptools>=65.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "esa-iagen"
+version = "0.1.0"
+description = "AI Agent for querying Copernicus Sentinel Missions documentation"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+    {name = "Andrés Ruiz Calvo", email = "adastra.ai26@gmail.com"}
+]
+keywords = ["esa", "sentinel", "copernicus", "rag", "ai-agent", "langgraph"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    # Document Processing
+    "docling>=2.63.0",
+    "docling-core>=2.52.0",
+    "docling-parse>=4.7.1",
+    "pypdf>=3.17.0",
+    # ML/NLP for Docling
+    "transformers>=4.57.0",
+    "torch>=2.9.0",
+    "torchvision>=0.24.0",
+    "langchain-text-splitters>=0.0.1",
+    # Vector Database
+    "qdrant-client>=1.7.0",
+    # LLM & Embeddings
+    "langchain>=0.1.0",
+    "langchain-community>=0.0.13",
+    "langchain-openai>=0.0.5",
+    "langchain-anthropic>=0.1.0",
+    "langgraph>=0.2.0",
+    "langsmith>=0.1.0",
+    "openai>=1.10.0",
+    "anthropic>=0.8.0",
+    "litellm>=1.0.0",
+    # Reranking
+    "sentence-transformers>=2.2.0",
+    "flashrank>=0.2.0",
+    # API Framework
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    # MCP Server
+    "fastmcp>=2.0.0",
+    # Utilities
+    "python-dotenv>=1.0.0",
+    "pyyaml>=6.0.1",
+    "loguru>=0.7.2",
+    "httpx>=0.26.0",
+    "aiohttp>=3.9.0",
+    "beautifulsoup4>=4.12.0",
+    # AWS SDK
+    "boto3>=1.34.0",
+    "botocore[crt]>=1.34.0",  # Required for S3 logging in ECS with IAM roles
+    # Web Scraping
+    "crawl4ai>=0.3.0",
+    # Monitoring
+    "prometheus-client>=0.19.0",
+    "tenacity>=8.2.3",
+    "tqdm>=4.66.0",
+    "pandas>=2.3.3",
+    "pydantic>=2.5.0",
+    "pydantic-settings>=2.1.0",
+    "click>=8.1.0",
+    "ragas>=0.4.1",
+    "datasets>=4.4.1",
+    "langchain-huggingface>=1.2.0",
+    "matplotlib>=3.10.8",
+    "seaborn>=0.13.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.1.0",
+    "black>=24.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.8.0",
+    "ipython>=8.20.0",
+]
+
+[tool.setuptools]
+package-dir = {"" = "."}
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+
+[tool.black]
+line-length = 100
+target-version = ['py311']
+include = '\.pyi?$'
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+select = ["E", "W", "F", "I", "C", "B", "UP"]
+ignore = ["E501", "B008", "C901"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = [
+    "docling.*",
+    "qdrant_client.*",
+    "transformers.*",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+asyncio_mode = "auto"
+addopts = [
+    "-v",
+    "--strict-markers",
+    "--tb=short",
+    "--cov=src",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--cov-report=xml",
+]
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "e2e: End-to-end tests",
+    "slow: Slow running tests",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
+
+[tool.coverage.run]
+# Exclude dataspace files from coverage (not used in production)
+omit = [
+    "src/crawlers/scrape_dataspace_crawl4ai.py",
+    "src/parsers/dataspace_chunker.py",
+    "src/utils/markdown_cleaner_dataspace.py",
+    "src/utils/metadata_normalizer_dataspace.py",
+    # Also exclude other non-production files
+    "src/mcp/server.py",  # Optional MCP server
+    "src/crawlers/scrape_sentiwiki_crawl4ai.py",  # CLI script
+    "src/parsers/sentiwiki_chunker.py",  # CLI script
+    "src/utils/markdown_cleaner_sentiwiki.py",  # CLI utility
+    "src/utils/metadata_normalizer_sentiwiki.py",  # CLI utility
+]
+
+[tool.coverage.report]
+# Exclude patterns from coverage report
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "@abstractmethod",
+]
+

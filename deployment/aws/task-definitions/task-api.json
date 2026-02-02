@@ -1,0 +1,82 @@
+{
+  "family": "esa-iagen-api",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "cpu": "4096",
+  "memory": "8192",
+  "taskRoleArn": "arn:aws:iam::YOUR_ACCOUNT_ID:role/ecsTaskExecutionRole",
+  "executionRoleArn": "arn:aws:iam::YOUR_ACCOUNT_ID:role/ecsTaskExecutionRole",
+  "containerDefinitions": [
+    {
+      "name": "api",
+      "image": "YOUR_ACCOUNT_ID.dkr.ecr.YOUR_REGION.amazonaws.com/esa-iagen-api:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "QDRANT__HOST",
+          "value": "qdrant.esa-iagen.local"
+        },
+        {
+          "name": "QDRANT__PORT",
+          "value": "6333"
+        },
+        {
+          "name": "UVICORN_WORKERS",
+          "value": "1"
+        },
+        {
+          "name": "API__CORS_ORIGINS",
+          "value": "http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000,http://127.0.0.1:3001"
+        },
+        {
+          "name": "S3_BUCKET_NAME",
+          "value": "esa-iagen-data"
+        },
+        {
+          "name": "S3_LOGGING_ENABLED",
+          "value": "true"
+        },
+        {
+          "name": "AWS_REGION",
+          "value": "YOUR_REGION"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "ANTHROPIC_API_KEY",
+          "valueFrom": "arn:aws:secretsmanager:YOUR_REGION:YOUR_ACCOUNT_ID:secret:esa-iagen/ANTHROPIC_API_KEY"
+        },
+        {
+          "name": "OPENAI_API_KEY",
+          "valueFrom": "arn:aws:secretsmanager:YOUR_REGION:YOUR_ACCOUNT_ID:secret:esa-iagen/OPENAI_API_KEY"
+        }
+      ],
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "curl -f --max-time 5 http://localhost:8000/ || exit 1"
+        ],
+        "interval": 30,
+        "timeout": 10,
+        "retries": 3,
+        "startPeriod": 180
+      },
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/esa-iagen",
+          "awslogs-region": "YOUR_REGION",
+          "awslogs-stream-prefix": "api"
+        }
+      }
+    }
+  ]
+}

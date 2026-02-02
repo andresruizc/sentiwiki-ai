@@ -1,0 +1,61 @@
+{
+  "family": "esa-iagen-grafana",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "taskRoleArn": "arn:aws:iam::YOUR_ACCOUNT_ID:role/ecsTaskExecutionRole",
+  "executionRoleArn": "arn:aws:iam::YOUR_ACCOUNT_ID:role/ecsTaskExecutionRole",
+  "containerDefinitions": [
+    {
+      "name": "grafana",
+      "image": "grafana/grafana:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 3002,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "GF_SECURITY_ADMIN_USER",
+          "value": "admin"
+        },
+        {
+          "name": "GF_USERS_ALLOW_SIGN_UP",
+          "value": "false"
+        },
+        {
+          "name": "GF_SERVER_HTTP_PORT",
+          "value": "3002"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "GF_SECURITY_ADMIN_PASSWORD",
+          "valueFrom": "arn:aws:secretsmanager:YOUR_REGION:YOUR_ACCOUNT_ID:secret:GRAFANA_ADMIN_PASSWORD"
+        }
+      ],
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "wget --quiet --tries=1 --spider http://localhost:3002/api/health || exit 1"
+        ],
+        "interval": 30,
+        "timeout": 10,
+        "retries": 3,
+        "startPeriod": 40
+      },
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/esa-iagen",
+          "awslogs-region": "YOUR_REGION",
+          "awslogs-stream-prefix": "grafana"
+        }
+      }
+    }
+  ]
+}
+
