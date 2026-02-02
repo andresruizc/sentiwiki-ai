@@ -672,7 +672,7 @@ uv run python -m src.db.populate_vectors
 - 🚀 **Share learnings** from deploying and scaling AI systems in production
 
 **Connect with me:**
-- 🌐 **Website:** [andrescv.com](https://https://andresrcv.com/.com)
+- 🌐 **Website:** [andrescv.com](https://andresrcv.com/)
 - 📧 **Email:** [adastra.ai26@gmail.com](mailto:adastra.ai26@gmail.com)
 - 💼 **LinkedIn:** [linkedin.com/in/andresruizcalvo](https://www.linkedin.com/in/andresruizcalvo/)
 - 📬 **Substack:** [Ad Astra AI on Substack](https://adastraai.substack.com/) — Weekly deep-dives on production AI engineering
