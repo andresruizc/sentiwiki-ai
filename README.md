@@ -681,5 +681,3 @@ uv run python -m src.db.populate_vectors
 - 💼 **LinkedIn:** [linkedin.com/in/andresruizcalvo](https://www.linkedin.com/in/andresruizcalvo/)
 - 📬 **Substack:** [Ad Astra AI on Substack](https://adastraai.substack.com/) — Weekly deep-dives on production AI engineering
 - 🎥 **YouTube:** Coming soon! — Code, demos, and insights
-
-**Questions, feedback, or want to collaborate?** Feel free to reach out! I'm always interested in discussing AI systems, RAG architectures, or production engineering challenges.
