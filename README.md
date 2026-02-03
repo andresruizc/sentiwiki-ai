@@ -21,14 +21,8 @@
 **See SentiWiki AI in action!** Watch the system answer complex questions about ESA Copernicus Sentinel missions with real-time streaming responses.
 
 <div style="text-align: center;">
-    <video width="100%" controls autoplay loop muted>
-        <source src="docs/images/demo_video.MOV" type="video/quicktime">
-        <source src="docs/images/demo_video.gif" type="image/gif">
-        Your browser does not support the video tag.
-    </video>
+    <img src="docs/images/demo_video.gif" alt="SentiWiki AI Demo" width="100%" />
 </div>
-
----
 
 <table style="border-collapse: collapse; border: none;">
   <tr style="border: none;">
